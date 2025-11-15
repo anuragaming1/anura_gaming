@@ -402,3 +402,32 @@ code {
         align-items: stretch;
     }
 }
+/* Thêm vào cuối file style.css */
+
+.admin-note {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.admin-note p {
+    margin: 0;
+    color: #ffc107;
+    font-size: 14px;
+}
+
+.admin-note strong {
+    color: #ff9800;
+}
+
+.login-box {
+    position: relative;
+}
+
+/* Ẩn các phần không cần thiết */
+.btn-secondary {
+    display: none;
+}
