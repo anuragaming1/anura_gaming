@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anura Gaming - Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>🎮 ANURA GAMING</h1>
+            <div class="user-info">
+                <span id="usernameDisplay"></span>
+                <button onclick="logout()" class="btn-logout">Đăng xuất</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="card">
+                <h2>📁 UPLOAD MÃ NGUỒN THẬT (Cho Curl/Termux)</h2>
+                <div class="file-upload">
+                    <input type="file" id="curlFile" accept=".txt,.py,.js,.lua,.json,.xml,.php,.html,.css">
+                    <div class="file-preview" id="curlPreview"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📁 UPLOAD MÃ NGUỒN FAKE (Cho Trình Duyệt)</h2>
+                <div class="file-upload">
+                    <input type="file" id="webFile" accept=".txt,.py,.js,.lua,.json,.xml,.php,.html,.css">
+                    <div class="file-preview" id="webPreview"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ TẠO SCRIPT MỚI</h2>
+                <div class="input-group">
+                    <label>Tên Script (chỉ chữ, số và dấu gạch ngang):</label>
+                    <input type="text" id="scriptName" placeholder="vidu: auto-farm, aim-bot, hack-gold" required 
+                           pattern="[a-zA-Z0-9\-]+" title="Chỉ cho phép chữ cái, số và dấu gạch ngang">
+                </div>
+                <button onclick="createScript()" class="btn-primary">🚀 TẠO SCRIPT</button>
+                
+                <div class="result" id="result">
+                    <h3>✅ THÔNG TIN SCRIPT:</h3>
+                    <div id="resultContent"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 SCRIPT CỦA BẠN</h2>
+                <div id="scriptsList" class="scripts-list">
+                    <p class="loading">Đang tải...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let curlContent = '';
+        let webContent = '';
+
+        // Kiểm tra đăng nhập
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        
+        if (!token) {
+            window.location.href = '/index.html';
+            return;
+        }
+
+        document.getElementById('usernameDisplay').textContent = `Xin chào, ${username}`;
+
+        // Xử lý upload file THẬT (cho curl)
+        document.getElementById('curlFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.size > 1024 * 1024) { // 1MB limit
+                alert('File quá lớn! Chỉ chấp nhận file dưới 1MB');
+                this.value = '';
+                return;
+            }
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    curlContent = e.target.result;
+                    document.getElementById('curlPreview').textContent = 
+                        `✅ Đã tải file THẬT: ${file.name} (${curlContent.length} ký tự)\n` +
+                        `📝 Xem trước: ${curlContent.substring(0, 200)}${curlContent.length > 200 ? '...' : ''}`;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Xử lý upload file FAKE (cho web)
+        document.getElementById('webFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.size > 1024 * 1024) { // 1MB limit
+                alert('File quá lớn! Chỉ chấp nhận file dưới 1MB');
+                this.value = '';
+                return;
+            }
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    webContent = e.target.result;
+                    document.getElementById('webPreview').textContent = 
+                        `🎭 Đã tải file FAKE: ${file.name} (${webContent.length} ký tự)\n` +
+                        `📝 Xem trước: ${webContent.substring(0, 200)}${webContent.length > 200 ? '...' : ''}`;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Tạo script
+        async function createScript() {
+            const scriptName = document.getElementById('scriptName').value.trim();
+            
+            if (!scriptName) {
+                alert('Vui lòng nhập tên script!');
+                return;
+            }
+
+            // Validate tên script
+            if (!/^[a-zA-Z0-9\-]+$/.test(scriptName)) {
+                alert('Tên script chỉ được chứa chữ cái, số và dấu gạch ngang!');
+                return;
+            }
+
+            if (!curlContent) {
+                alert('Vui lòng upload mã nguồn THẬT (cho curl/Termux)!');
+                return;
+            }
+
+            if (!webContent) {
+                alert('Vui lòng upload mã nguồn FAKE (cho trình duyệt)!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/scripts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        scriptName,
+                        curlContent,
+                        webContent
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const scriptUrl = data.script.curlUrl;
+                    const resultContent = document.getElementById('resultContent');
+                    
+                    resultContent.innerHTML = `
+                        <div class="success-info">
+                            <p><strong>🆔 Tên Script:</strong> ${scriptName}</p>
+                            <p><strong>🔗 URL DUY NHẤT:</strong></p>
+                            <code class="url-display">${scriptUrl}</code>
+                            
+                            <div class="usage-examples">
+                                <p><strong>📖 CÁCH SỬ DỤNG:</strong></p>
+                                <div class="example">
+                                    <p><strong>Termux/Curl (nhận mã THẬT):</strong></p>
+                                    <code>curl "${scriptUrl}"</code>
+                                    <button onclick="copyToClipboard('curl \\\"${scriptUrl}\\\"')" class="btn-copy-small">📋</button>
+                                </div>
+                                <div class="example">
+                                    <p><strong>Trình duyệt (nhận mã FAKE):</strong></p>
+                                    <code>${scriptUrl}</code>
+                                    <button onclick="copyToClipboard('${scriptUrl}')" class="btn-copy-small">📋</button>
+                                </div>
+                            </div>
+                            
+                            <div class="stats">
+                                <p><strong>📊 THỐNG KÊ:</strong></p>
+                                <p>• Mã thật: ${curlContent.length} ký tự</p>
+                                <p>• Mã fake: ${webContent.length} ký tự</p>
+                            </div>
+                            
+                            <p class="success-message">🎉 Script đã được tạo thành công! Chia sẻ URL trên để người dùng tải script.</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('result').style.display = 'block';
+                    loadScripts();
+                    
+                    // Reset form
+                    document.getElementById('scriptName').value = '';
+                    document.getElementById('curlFile').value = '';
+                    document.getElementById('webFile').value = '';
+                    document.getElementById('curlPreview').textContent = '';
+                    document.getElementById('webPreview').textContent = '';
+                    curlContent = '';
+                    webContent = '';
+                    
+                } else {
+                    alert('Lỗi: ' + data.error);
+                }
+            } catch (err) {
+                alert('Lỗi kết nối: ' + err.message);
+            }
+        }
+
+        // Load danh sách scripts
+        async function loadScripts() {
+            try {
+                const response = await fetch('/api/scripts', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const scriptsList = document.getElementById('scriptsList');
+                    
+                    if (data.scripts.length === 0) {
+                        scriptsList.innerHTML = '<p class="no-scripts">📭 Chưa có script nào</p>';
+                        return;
+                    }
+
+                    scriptsList.innerHTML = data.scripts.map(script => {
+                        return `
+                            <div class="script-item">
+                                <div class="script-header">
+                                    <h4>${script.scriptName}</h4>
+                                    <span class="script-date">${new Date(script.createdAt).toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <div class="script-url">
+                                    <strong>URL:</strong> 
+                                    <code>${script.url}</code>
+                                    <button onclick="copyToClipboard('${script.url}')" class="btn-copy">📋</button>
+                                </div>
+                                <div class="script-stats">
+                                    <span>Thật: ${script.curlContent?.length || 0} ký tự</span>
+                                    <span>Fake: ${script.webContent?.length || 0} ký tự</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Lỗi tải scripts:', err);
+                document.getElementById('scriptsList').innerHTML = '<p class="error">Lỗi tải danh sách script</p>';
+            }
+        }
+
+        // Copy URL
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Đã copy vào clipboard!');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                alert('❌ Lỗi copy, vui lòng thử lại');
+            });
+        }
+
+        // Đăng xuất
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/index.html';
+        }
+
+        // Tải scripts khi trang load
+        loadScripts();
+    </script>
+</body>
+</html>
