@@ -10,64 +10,38 @@
     <div class="container">
         <div class="login-box">
             <h1>🎮 ANURA GAMING</h1>
-            <p class="subtitle">Quản lý script game của bạn</p>
+            <p class="subtitle">Quản lý script game - Phiên bản Admin</p>
             
             <form id="loginForm">
                 <div class="input-group">
-                    <label>Tài khoản</label>
-                    <input type="text" id="username" placeholder="Nhập tài khoản" required>
+                    <label>Tài khoản Admin</label>
+                    <input type="text" id="username" placeholder="Nhập tài khoản admin" required>
                 </div>
                 <div class="input-group">
-                    <label>Mật khẩu</label>
-                    <input type="password" id="password" placeholder="Nhập mật khẩu" required>
+                    <label>Mật khẩu Admin</label>
+                    <input type="password" id="password" placeholder="Nhập mật khẩu admin" required>
                 </div>
-                <button type="submit" class="btn-primary">ĐĂNG NHẬP</button>
-                <button type="button" class="btn-secondary" onclick="showRegister()">ĐĂNG KÝ TÀI KHOẢN</button>
-            </form>
-
-            <form id="registerForm" style="display: none;">
-                <div class="input-group">
-                    <label>Tài khoản mới</label>
-                    <input type="text" id="newUsername" placeholder="Nhập tài khoản" required>
-                </div>
-                <div class="input-group">
-                    <label>Mật khẩu mới</label>
-                    <input type="password" id="newPassword" placeholder="Nhập mật khẩu" required>
-                </div>
-                <button type="submit" class="btn-primary">ĐĂNG KÝ</button>
-                <button type="button" class="btn-secondary" onclick="showLogin()">ĐĂNG NHẬP</button>
+                <button type="submit" class="btn-primary">ĐĂNG NHẬP HỆ THỐNG</button>
             </form>
 
             <div class="error" id="error"></div>
+            
+            <div class="admin-note">
+                <p><strong>⚠️ CHÚ Ý:</strong> Chỉ tài khoản admin được ủy quyền mới có thể đăng nhập</p>
+            </div>
         </div>
     </div>
 
     <script>
-        let isRegistering = false;
-
-        function showRegister() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
-            isRegistering = true;
-            document.getElementById('error').textContent = '';
-        }
-
-        function showLogin() {
-            document.getElementById('registerForm').style.display = 'none';
-            document.getElementById('loginForm').style.display = 'block';
-            isRegistering = false;
-            document.getElementById('error').textContent = '';
-        }
-
-        async function handleAuth(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const username = document.getElementById(isRegistering ? 'newUsername' : 'username').value;
-            const password = document.getElementById(isRegistering ? 'newPassword' : 'password').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
             const errorElement = document.getElementById('error');
 
             if (!username || !password) {
-                errorElement.textContent = 'Vui lòng nhập đầy đủ thông tin';
+                errorElement.textContent = 'Vui lòng nhập đầy đủ thông tin đăng nhập';
                 return;
             }
 
@@ -78,7 +52,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        action: isRegistering ? 'register' : 'login',
+                        action: 'login',
                         username,
                         password
                     })
@@ -91,16 +65,13 @@
                     localStorage.setItem('username', data.username);
                     window.location.href = '/dashboard.html';
                 } else {
-                    errorElement.textContent = data.error || 'Có lỗi xảy ra';
+                    errorElement.textContent = data.error || 'Tài khoản hoặc mật khẩu không đúng';
                 }
             } catch (err) {
-                errorElement.textContent = 'Lỗi kết nối đến server';
+                errorElement.textContent = 'Lỗi kết nối đến server. Vui lòng thử lại.';
                 console.error('Auth error:', err);
             }
-        }
-
-        document.getElementById('loginForm').addEventListener('submit', handleAuth);
-        document.getElementById('registerForm').addEventListener('submit', handleAuth);
+        });
 
         // Nếu đã đăng nhập, chuyển hướng
         if (localStorage.getItem('token')) {
